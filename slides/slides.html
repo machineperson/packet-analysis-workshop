@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+    @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+    @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+    @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+    body {
+      font-family: 'Droid Serif';
+      background-color: #6D8EA0;
+    }
+
+    h1, h2, h3 {
+      font-family: 'Yanone Kaffeesatz';
+      font-weight: normal;
+    }
+    .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+    .dark {
+      background-color: #0c1821!important;
+      color: #4472ca;
+    }
+
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle, dark
+
+# Packet analysis for fun and profit
+
+---
+
+class: left, middle, dark
+
+# Agenda
+
+1. Introduction
+2. How to use Wireshark
+3. Hands-on exercises
+
+
+---
+
+class: left, middle, dark
+
+# Introduction
+
+We're going to look at how to analyse a packet capture file, using [Wireshark](https://www.wireshark.org/) as an analysis tool.
+
+I'm assuming that you have not necessarily analysed a pcap before, but that you have some (very basic) knowledge of networking.
+
+It's aimed at beginners, experts will likely not learn anything new here.
+
+There will be some beginner-friendly exercises to get your hands dirty. We'll be using example pcap files from "Practical Packet Analysis" by Chris Sanders; you can download them [from Github](https://github.com/chrissanders/packets)
+
+
+---
+class: left, middle, dark
+
+# Wireshark display filters
+
+We can filter by all sorts of things in Wireshark: protocols, IP addresses, MAC addresses, even specific fields in protocols.
+
+### Syntax
+
+The format for display filters usually follows the schema *protocol.feature.subfeature*, e.g. *http.request.method*
+We have the usual operators (==, !=, >, <, >=, <=) for comparisons, and the logical operators *and*, *or*, *xor* and *not* to combine expressions.
+
+Configure colours for specific display filters in View -> Coloring Rules dialog.
+
+### Examples
+- `dns.aaaa` to show all DNS packets with AAAA queries
+- `ip.src == 10.2.0.1 and dns` to show all DNS packets originating from IP address 10.2.0.1
+- `arp` to clear out ARP traffic
+
+---
+class: left, middle, dark
+
+# Statistics
+
+Look at [lotsofweb.pcapng](https://github.com/chrissanders/packets/blob/master/lotsofweb.pcapng) to follow along.
+
+- View endpoints and conversations in a pcap file
+- Identify endpoints with highest amounts of traffic
+- View protocol hierarchy statistics
+
+---
+class: left, middle, dark
+
+# Streams
+
+Wireshark can reassemble data from multiple packets into a transcript, so we can easily follow client-server communications without looking at each packet.
+
+Right-click a packet that is part of a transaction and choose "Follow TCP/UDP/HTTP Stream".
+
+You can follow SSL streams as well, but need to supply the private key associated with the server to decrypt the conversation.
+
+---
+
+class: left, middle, dark
+
+# Example: Detect a SYN scan
+
+This is a type of port scan against a target. Attacker sends a TCP SYN packet to a range of ports on the target; when it is received, one of 3 things can happen:
+- Port is open: Target will send back a TCP SYN/ACK packet
+- Port is closed: Target may send back a TCP RST packet, or no response
+- Port is filtered: No response
+
+Open [synscan.pcapng](https://github.com/chrissanders/packets/blob/master/synscan.pcapng) to follow along.
+
+---
+
+class: left, middle, dark
+
+# Example: ARP poisoning attack
+
+Normal ARP protocol exchange: [arp_resolution.pcapng](https://github.com/chrissanders/packets/blob/master/arp_resolution.pcapng).
+
+ARP cache poisoning attacks are used to intercept traffic. An attacker sends out fake ARP request and response packets to trick two hosts into thinking they are talking to each other, while they're both talking to the attacker.
+
+Open [arppoison.pcapng](https://github.com/chrissanders/packets/blob/master/arppoison.pcapng) to follow along.
+Once an attacker has intercepted traffic between two hosts, they can do fun things like [session hijacking](https://github.com/chrissanders/packets/blob/master/sessionhijacking.pcapng).
+
+---
+
+class: left, middle, dark
+
+# Example: RAT (Remote Access Trojan)
+
+Open [ratinfected.pcapng](https://github.com/chrissanders/packets/blob/master/ratinfected.pcapng) to follow along.
+
+We're investigating an alert triggered by this Snort rule that fires on a predefined signature for a RAT:
+```
+alert tcp any any -> $HOME_NET any (msg:"CyberEYE RAT Session Establishment";
+content:"|41 4E 41 42 49 4C 47 49 7C|"; classtype:trojan-activity;
+sid:132456789; rev:2;)
+```
+
+Start by searching for the hex string (Ctrl + F) and then go from there.
+
+---
+
+class: left, middle, dark
+
+# Further reading/Resources
+
+- [Practical Packet Analysis](https://nostarch.com/packetanalysis3) by Chris Sanders
+- [malware-traffic-analysis.net](https://www.malware-traffic-analysis.net/) - exercises, sample pcap files and malware samples
+- [List of publicly available pcap files and CTFs](https://www.netresec.com/?page=PcapFiles)
+- [Sample Wireshark captures](https://wiki.wireshark.org/SampleCaptures#Sample_Captures) - good for looking at individual protocols
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
